@@ -1,0 +1,66 @@
+#!/bin/bash
+#################################################################
+# Description:  This basic bash shell script for a simple job.
+#               The job can be submitted to the standard queue
+#               with the following command:  "qsub basic.pbs"
+# Use the "show_usage" command to get your PROJECT_ID(s).
+#################################################################
+# REQUIRED DIRECTIVES   -----------------------------------------
+#################################################################
+# Account to be charged
+#PBS -A NRLDC33960536
+
+# Set max wall time to 24 hours
+#PBS -l walltime=77:00:00
+
+# Run the job in the standard queue
+#PBS -q standard_lw
+
+# Select 1 node, with all the cpus and 384 processes
+#PBS -l select=1:ncpus=192:mpiprocs=73:bigmem=1
+
+###################################################################
+# RECOMMENDED DIRECTIVES   ---------------------------------------
+###################################################################
+#PBS -l application=other
+
+###################################################################
+# OPTIONAL DIRECTIVES   -------------------------------------------
+###################################################################
+# Name the job
+#PBS -N deu68910
+
+# Change stdout and stderr filenames
+#PBS -o up_phgn.out
+#PBS -e up_phgn.err
+
+###################################################################
+# EXECUTION BLOCK   -----------------------------------------------
+###################################################################
+
+# module load python/3.13.3
+
+cd $WORKDIR/up_phgn/
+
+venv="${WORKDIR}/up_phgn/phgn_planner/experiments/pbs/venv"
+
+source $WORKDIR/up_phgn/phgn_planner/experiments/pbs/venv/bin/activate
+
+
+outfile="${WORKDIR}/up_phgn/phgn_planner/experiments/results/data.csv"
+if [[ ! -f "$outfile" ]]; then
+  echo "domain,problem_instance,variant,result,cost,num_nodes,n_rollouts,horizon,budget,exploration_const,normalize_exploration_const,n_init,risk_factor,goal_utility,seed,show_progress
+" > "$outfile"
+fi
+
+# Run the job
+mpiexec -n 20 python $WORKDIR/up_phgn/phgn_planner/experiments/run_uct.py --domain depot --problem_instance 6 --variant factored --output_file $outfile : \
+        -n 14 python $WORKDIR/up_phgn/phgn_planner/experiments/run_uct.py --domain depot --problem_instance 8 --variant factored --output_file $outfile : \
+        -n 20 python $WORKDIR/up_phgn/phgn_planner/experiments/run_uct.py --domain depot --problem_instance 9 --variant factored --output_file $outfile : \
+        -n 20 python $WORKDIR/up_phgn/phgn_planner/experiments/run_uct.py --domain depot --problem_instance 10 --variant factored --output_file $outfile
+
+##################################################################
+# CLEAN UP -------------------------------------------------------
+##################################################################
+
+cp "$outfile" $HOME/up_phgn_results/

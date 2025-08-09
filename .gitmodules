@@ -1,0 +1,4 @@
+[submodule "unified-planning"]
+	path = unified-planning
+	url = git@spork.nre.navy.mil:dhchan_nre/unified-planning.git
+	branch = phgn
